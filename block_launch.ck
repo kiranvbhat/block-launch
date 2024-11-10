@@ -4,7 +4,7 @@
 // ================== constants defined by game designer ==================
 
 4 => int NUM_PLATFORMS;   // number of tracks/individual step sequencers
-200 => int NUM_STARS;
+400 => int NUM_STARS;
 
 2::second => dur CAMERA_MODE_SWITCH_DUR;
 
@@ -111,9 +111,20 @@ fun void place_platforms()
 
 fun void place_stars()
 {
-    (PLATFORM_VERTICAL_SPACING * NUM_PLATFORMS) => float y_range;
-    (PLATFORM_HORIZONTAL_SPACING * NUM_PLATFORMS) => float z_range;
-    z_range => float x_range;
+    // 2 => float expand;
+    // (PLATFORM_VERTICAL_SPACING * NUM_PLATFORMS) * expand => float y_range;
+    // (PLATFORM_HORIZONTAL_SPACING * NUM_PLATFORMS) * expand => float z_range;
+    // z_range => float x_range;
+
+    140 => float x_range;
+    x_range => float y_range;
+    x_range => float z_range;
+
+
+    0 => float x_offset;
+    (PLATFORM_VERTICAL_SPACING * NUM_PLATFORMS)/2 => float y_offset;
+    -(PLATFORM_HORIZONTAL_SPACING * NUM_PLATFORMS)/2 => float z_offset;
+
     
     for (int i; i < NUM_STARS; i++)
     {
@@ -121,7 +132,7 @@ fun void place_stars()
         Math.random2f(-y_range, y_range) => float y;
         Math.random2f(-z_range, z_range) => float z;
         @(x, y, z) => vec3 star_pos;
-        @(0, y_range/2, -z_range/2) => vec3 offset;
+        @(x_offset, y_offset, z_offset) => vec3 offset;
 
         GStar star --> GG.scene();
         star.pos(star_pos + offset);
@@ -170,6 +181,7 @@ fun void update_bpm()
 // - B: bpm (for current platform)
 // - N: num_pads (for current platform)
 // - G: gravity (for player)
+// - L: launch force
 fun void scroll_parameters()
 {
     // select current parameter we would like to change
@@ -267,6 +279,7 @@ fun void update_text()
 
 fun void setup()
 {
+    GG.scene().light().intensity(2);
     create_instruments();
     place_platforms();
     place_stars();

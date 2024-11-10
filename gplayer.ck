@@ -3,27 +3,38 @@
 public class GPlayer extends GGen
 {
     // ----- initialize mesh -----
-    GSphere body --> this;
-    body.scaX(0.5);
-    body.scaZ(0.3);
+    0.4 => float foot_separation;
+    @(0.2, 0.4, 0.5) => vec3 foot_scale;
+
+    GSphere left_foot --> this;
+    left_foot.sca(foot_scale);
+    left_foot.color(Color.BLACK);
+    left_foot.pos(@(-foot_separation, 0.2, 0.5));
+
+    GSphere right_foot --> this;
+    right_foot.sca(foot_scale);
+    right_foot.color(Color.BLACK);
+    right_foot.pos(@(foot_separation, 0.2, 0.5));
 
     // ----- set up camera (the player's eye) -----
     // camera
     GG.scene().camera() @=> GCamera @ eye;
 
     // camera constants
+    @(0.0, 1.8, 0.0) => vec3 STARTING_EYES_POS;     // where the player's eyes are (relative to the player's position)
     eye.clipFar() + 100 => float FIRST_PERSON_CLIP_FAR;
-    eye.fov() + 0.5 => float FIRST_PERSON_FOV;
+    eye.fov() + 0.6 => float FIRST_PERSON_FOV;
     eye.fov() + 1 => float JUMP_FOV;
 
     // camera initial settings
+    eye.pos(STARTING_EYES_POS);   // relative position to overall GPlayer
     eye.clip(eye.clipNear(), FIRST_PERSON_CLIP_FAR);
     eye.fov(FIRST_PERSON_FOV);
     eye --> this;
 
     // ----- set up FOV/position envelopes for eye -----
     Envelope fov_env => blackhole;
-    1::second => dur FOV_ON_DUR;
+    500::ms => dur FOV_ON_DUR;
     100::ms => dur FOV_OFF_DUR;
     FIRST_PERSON_FOV => fov_env.value;
 
@@ -35,10 +46,11 @@ public class GPlayer extends GGen
     // ----- set up crosshair -----
     GCircle crosshair;
 
-    0.003 => static float NEUTRAL_CROSSHAIR_SCA;
+    0.005 => static float NEUTRAL_CROSSHAIR_SCA;
     0.02 => static float HOVER_CROSSHAIR_SCA;
-    0.001 => static float CLICK_CROSSHAIR_SCA;
+    0.003 => static float CLICK_CROSSHAIR_SCA;
     
+    @(0, 0, -0.4) => crosshair.pos;   // relative position to eye
     NEUTRAL_CROSSHAIR_SCA => crosshair.sca;
     Color.WHITE => crosshair.color;
     crosshair --> eye;
@@ -54,8 +66,7 @@ public class GPlayer extends GGen
     PhysicsObject physics_object;
 
     // ----- some constants to control gameplay -----
-    @(0.0, 0.0, 0.0) => vec3 STARTING_BODY_POS;     // where the player's eyes are (relative to the player's position)
-    @(0.0, 1.8, 0.0) => vec3 STARTING_EYES_POS;     // where the player's eyes are (relative to the player's position)
+    
     40 => float PLAYER_SPEED;      // how much force is applied to player when running
     450 => float JUMP_FORCE;
     2000 => float LAUNCH_FORCE;
@@ -75,8 +86,8 @@ public class GPlayer extends GGen
 
     fun GPlayer(Keyboard @ k, Mouse @ m)
     {
-        STARTING_EYES_POS => eye.pos;   // relative position to overall GPlayer
-        @(0, 0, -0.4) => crosshair.pos;   // relative position to eye
+        
+        
         
         k @=> this.keyboard;
         m @=> this.mouse;
@@ -183,25 +194,48 @@ public class GPlayer extends GGen
         physics_object.set_external_force(@(0, 0, 0));      // reset external force each time we update position
     }
 
-    // fun void block_launch()
-    // {
-    //     apply_external_force
-    // }
 
     fun void update_fov()
     {
+        Math.PI/1.2 => float MAX_FOV;
+        MAX_FOV - FIRST_PERSON_FOV => float MAX_FOV_INCREASE;
+        // 55 => float peak_speed;      // my estimate for peak velocity magnitude
+        40 => float peak_speed;
+        if (camera_mode == FIRST_PERSON)
+        {
+            if (physics_object.normal_force_on)
+            {
+                FOV_OFF_DUR => fov_env.duration;
+                FIRST_PERSON_FOV => fov_env.target;
+            }
+            else
+            {
+                FOV_ON_DUR => fov_env.duration;
+                (physics_object.velocity.magnitude() / peak_speed) => float speed_factor;    // should be in range [0, 1], where 1 is fastest and 0 is slowest (not moving)
+                FIRST_PERSON_FOV + (speed_factor * MAX_FOV_INCREASE) => fov_env.target;
+            }
+        }
         // if (camera_mode == FIRST_PERSON)
         // {
         //     if (physics_object.normal_force_on)
         //     {
-
+        //         FOV_OFF_DUR => fov_env.duration;
+        //         FIRST_PERSON_FOV => fov_env.target;
+        //     }
+        //     else
+        //     {
+        //         FOV_ON_DUR => fov_env.duration;
+        //         JUMP_FOV => fov_env.target;
         //     }
         // }
         
-        // else ()
+        // else if (camera_mode == THIRD_PERSON)
         // {
-
+        //     <<<"in third person">>>;
         // }
+
+        fov_env.value() => eye.fov;
+
         
     }
 
