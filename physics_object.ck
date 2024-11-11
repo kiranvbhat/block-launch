@@ -1,19 +1,7 @@
 public class PhysicsObject
 {
-    1.0/60.0 => float timestep;
-    // -------------- Physics Constants ---------------
-    // different gravities for fun
-    9.80665 => static float EARTH_G;
-    1.625 => static float MOON_G;
-    0 => static float ZERO_G;
-
-    // different fluid densities
-    0.1225 => static float AIR_DENSITY;
-
-    // different drag coefficients
-    0.5 => static float SPHERE_DRAG_COEFFICIENT;
-    0.8 => static float CUBE_DRAG_COEFFICIENT;
-    // -------------------------------------------------
+    60.0 => float FPS;
+    1.0/FPS => float timestep;
     
     // properties of world/object set by user
     vec3 gravity;
@@ -92,6 +80,9 @@ public class PhysicsObject
         total_force + get_drag_force() => total_force;
         total_force + get_external_force() => total_force;
 
+        // scale the y-force based on the timestep (so launching/jumping is consistent across different framerates)
+        if (timestep > 0) total_force.y / (timestep * FPS) => total_force.y;
+
         // <<< "total force for acceleration:", total_force >>>;
 
         // 2. set acceleration based on all current forces
@@ -150,20 +141,6 @@ public class PhysicsObject
         false => normal_force_on;
     }
 
-    fun void set_normal_force_on(int normal_force_on_new)
-    {
-        
-        if (!normal_force_on && normal_force_on_new)
-        {
-            contact_ground();
-        }
-        else if (normal_force_on && !normal_force_on_new)
-        {
-            leave_ground();
-        }
-        // otherwise, new normal force is the same as old one, and thus doesn't need to be updated
-    }
-
     fun void set_external_force(vec3 force)
     {
         force => external_force;
@@ -172,5 +149,10 @@ public class PhysicsObject
     fun void apply_external_force(vec3 force)
     {
         external_force + force => external_force;
+    }
+
+    fun void set_gravity(float g)
+    {
+        @(0, -g, 0) => gravity;
     }
 }

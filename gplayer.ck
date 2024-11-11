@@ -1,7 +1,10 @@
-@import {"keyboard.ck", "mouse.ck", "physics_object.ck"};
+@import {"keyboard.ck", "mouse.ck", "physics_object.ck", "sfx.ck"};
+@import "constants.ck";
 
 public class GPlayer extends GGen
 {
+    Constants c;
+
     // ----- initialize mesh -----
     0.4 => float foot_separation;
     @(0.2, 0.4, 0.5) => vec3 foot_scale;
@@ -20,23 +23,17 @@ public class GPlayer extends GGen
     // camera
     GG.scene().camera() @=> GCamera @ eye;
 
-    // camera constants
-    @(0.0, 1.8, 0.0) => vec3 STARTING_EYES_POS;     // where the player's eyes are (relative to the player's position)
-    eye.clipFar() + 100 => float FIRST_PERSON_CLIP_FAR;
-    eye.fov() + 0.6 => float FIRST_PERSON_FOV;
-    eye.fov() + 1 => float JUMP_FOV;
-
     // camera initial settings
-    eye.pos(STARTING_EYES_POS);   // relative position to overall GPlayer
-    eye.clip(eye.clipNear(), FIRST_PERSON_CLIP_FAR);
-    eye.fov(FIRST_PERSON_FOV);
+    eye.pos(c.STARTING_EYES_POS);   // relative position to overall GPlayer
+    eye.clip(eye.clipNear(), c.FIRST_PERSON_CLIP_FAR);
+    eye.fov(c.FIRST_PERSON_FOV);
     eye --> this;
 
     // ----- set up FOV/position envelopes for eye -----
     Envelope fov_env => blackhole;
     500::ms => dur FOV_ON_DUR;
     100::ms => dur FOV_OFF_DUR;
-    FIRST_PERSON_FOV => fov_env.value;
+    c.FIRST_PERSON_FOV => fov_env.value;
 
     // ----- keep track of camera mode -----
     0 => static int FIRST_PERSON;
@@ -46,12 +43,9 @@ public class GPlayer extends GGen
     // ----- set up crosshair -----
     GCircle crosshair;
 
-    0.005 => static float NEUTRAL_CROSSHAIR_SCA;
-    0.02 => static float HOVER_CROSSHAIR_SCA;
-    0.003 => static float CLICK_CROSSHAIR_SCA;
     
-    @(0, 0, -0.4) => crosshair.pos;   // relative position to eye
-    NEUTRAL_CROSSHAIR_SCA => crosshair.sca;
+    c.STARTING_CROSSHAIR_POS => crosshair.pos;   // relative position to eye
+    c.NEUTRAL_CROSSHAIR_SCA => crosshair.sca;
     Color.WHITE => crosshair.color;
     crosshair --> eye;
 
@@ -65,12 +59,14 @@ public class GPlayer extends GGen
     // ----- create a physics object for handling physics of player -----
     PhysicsObject physics_object;
 
-    // ----- some constants to control gameplay -----
-    
-    40 => float PLAYER_SPEED;      // how much force is applied to player when running
-    450 => float JUMP_FORCE;
-    2000 => float LAUNCH_FORCE;
-    true => int ALLOW_MIDAIR_JUMP;
+    // ----- create a SFX object for handling sound effects -----
+    SFX sfx;
+
+    // ----- some gameplay variables -----
+    c.STARTING_LAUNCH_FORCE => float launch_force;
+    c.ALLOW_MIDAIR_JUMP => int allow_midair_jump;
+
+
 
     // ----- state of player -----
     float rot_y;        // we must keep track of our own roty, since this.rotY() doesn't accurately reflect the rotation
@@ -81,27 +77,19 @@ public class GPlayer extends GGen
     2 => static int MOVE_LEFT;
     3 => static int MOVE_RIGHT;
     4 => static int JUMP;
-    5 => static int MOUSE_UPDATE;
+    5 => static int MOVE_DOWN;
+    6 => static int MOUSE_UPDATE;
 
 
     fun GPlayer(Keyboard @ k, Mouse @ m)
     {
-        
-        
-        
         k @=> this.keyboard;
         m @=> this.mouse;
 
         // create physics object, handles physics computations for updating player position
-        1 => float mass;
-        PhysicsObject.EARTH_G => float gravity;
-        2 => float mu_k;
-        PhysicsObject.AIR_DENSITY => float fluid_density;
-        PhysicsObject.CUBE_DRAG_COEFFICIENT => float c_d;
-        0.01 => float surface_area;
-        new PhysicsObject(mass, gravity, mu_k, fluid_density, c_d, surface_area) @=> physics_object;
+        new PhysicsObject(c.MASS, c.GRAVITY, c.MU_K, c.FLUID_DENSITY, c.C_D, c.SURFACE_AREA) @=> physics_object;
 
-        true => physics_object.normal_force_on;     // TEMPORARY, FOR TESTING PURPOSES. SHOULD ONLY COME ON WHEN ON A PLATFORM!
+        // true => physics_object.normal_force_on;     // TEMPORARY, FOR TESTING PURPOSES. SHOULD ONLY COME ON WHEN ON A PLATFORM!
     }
 
 
@@ -110,14 +98,15 @@ public class GPlayer extends GGen
     {
         // compute single frame force for movement
         (keyboard.move_forward + keyboard.move_backward + keyboard.move_left + keyboard.move_right) => int num_directions;
-        if (num_directions % 2 == 1) PLAYER_SPEED => single_frame_force;
-        else PLAYER_SPEED / 2 => single_frame_force;    // to make sure we don't double force when moving diagonally
+        if (num_directions % 2 == 1) c.PLAYER_SPEED => single_frame_force;
+        else c.PLAYER_SPEED / 2 => single_frame_force;    // to make sure we don't double force when moving diagonally
 
         if (keyboard.move_forward) handle_input(MOVE_FORWARD);
         if (keyboard.move_backward) handle_input(MOVE_BACKWARD);
         if (keyboard.move_left) handle_input(MOVE_LEFT);
         if (keyboard.move_right) handle_input(MOVE_RIGHT);
         if (keyboard.jump) handle_input(JUMP);
+        if (keyboard.move_down) handle_input(MOVE_DOWN);
         
         handle_input(MOUSE_UPDATE);
     }
@@ -152,10 +141,15 @@ public class GPlayer extends GGen
             forward_x_offset => float z_offset;
             @(x_offset, 0, z_offset) => movement_force;
         }
-        else if (input == JUMP && (physics_object.normal_force_on || ALLOW_MIDAIR_JUMP))           // normal force is on if the player on the ground. Only allow mid-air jumping if enabled
+        else if (input == JUMP && (physics_object.normal_force_on || allow_midair_jump))           // normal force is on if the player on the ground. Only allow mid-air jumping if enabled
         {
-            @(0, JUMP_FORCE, 0) => movement_force;
+            @(0, c.JUMP_FORCE, 0) => movement_force;
             false => keyboard.jump;     // only apply the jump force for a single frame
+        }
+
+        else if (input == MOVE_DOWN && (!physics_object.normal_force_on))
+        {
+            @(0, -single_frame_force*4, 0) => movement_force;
         }
         physics_object.apply_external_force(movement_force);
         
@@ -197,8 +191,8 @@ public class GPlayer extends GGen
 
     fun void update_fov()
     {
-        Math.PI/1.2 => float MAX_FOV;
-        MAX_FOV - FIRST_PERSON_FOV => float MAX_FOV_INCREASE;
+        
+        c.MAX_FOV - c.FIRST_PERSON_FOV => float MAX_FOV_INCREASE;
         // 55 => float peak_speed;      // my estimate for peak velocity magnitude
         40 => float peak_speed;
         if (camera_mode == FIRST_PERSON)
@@ -206,28 +200,15 @@ public class GPlayer extends GGen
             if (physics_object.normal_force_on)
             {
                 FOV_OFF_DUR => fov_env.duration;
-                FIRST_PERSON_FOV => fov_env.target;
+                c.FIRST_PERSON_FOV => fov_env.target;
             }
             else
             {
                 FOV_ON_DUR => fov_env.duration;
                 (physics_object.velocity.magnitude() / peak_speed) => float speed_factor;    // should be in range [0, 1], where 1 is fastest and 0 is slowest (not moving)
-                FIRST_PERSON_FOV + (speed_factor * MAX_FOV_INCREASE) => fov_env.target;
+                c.FIRST_PERSON_FOV + (speed_factor * MAX_FOV_INCREASE) => fov_env.target;
             }
         }
-        // if (camera_mode == FIRST_PERSON)
-        // {
-        //     if (physics_object.normal_force_on)
-        //     {
-        //         FOV_OFF_DUR => fov_env.duration;
-        //         FIRST_PERSON_FOV => fov_env.target;
-        //     }
-        //     else
-        //     {
-        //         FOV_ON_DUR => fov_env.duration;
-        //         JUMP_FOV => fov_env.target;
-        //     }
-        // }
         
         // else if (camera_mode == THIRD_PERSON)
         // {
@@ -257,14 +238,39 @@ public class GPlayer extends GGen
         crosshair_sca => crosshair.sca;
     }
 
+    // sets the player's normal force status (on or off)
     fun void set_normal_force(int normal_force_on_new)
     {
-        physics_object.set_normal_force_on(normal_force_on_new);
+        physics_object.normal_force_on => int normal_force_on;
+
+        if (!normal_force_on && normal_force_on_new)
+        {
+            physics_object.contact_ground();
+            spork ~ sfx.play_sound(SFX.CONTACT_GROUND);
+        }
+        else if (normal_force_on && !normal_force_on_new)
+        {
+            physics_object.leave_ground();
+        }
     }
 
     fun void launch()
     {
-        physics_object.apply_external_force(@(0, LAUNCH_FORCE, 0));
+        <<< "LAUNCH!!!" >>>;
+        physics_object.apply_external_force(@(0, launch_force, 0));
+        spork ~ sfx.play_sound(SFX.LAUNCH);
+        true => keyboard.toggle_chess_mode;         // my genius frightens me
+    }
+
+
+    fun void set_gravity(float g)
+    {
+        physics_object.set_gravity(g);
+    }
+
+    fun void set_launch_force(float new_launch_force)
+    {
+        new_launch_force => launch_force;
     }
 }
 

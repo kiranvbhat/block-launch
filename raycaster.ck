@@ -55,6 +55,19 @@ public class RayCaster
         return point_in_bounds(intersection_2d, bounding_points);
     }
 
+
+    fun int mouse_hovering(GGen pad, float rot_y)
+    {
+        get_bounding_points(pad, rot_y) @=> vec2 bounding_points[];
+        
+        // player.eye.posWorld().y - pad.posWorld().y => float height_difference;      // y distance between pad and camera
+        
+        // player.eye.screenCordToWorldPos(GWindow.mousePos(), height_difference);
+        player.eye.screenCoordToWorldPos(GWindow.mousePos(), 1) => vec3 mouse_world_pos;
+        @(mouse_world_pos.x, mouse_world_pos.z) => vec2 mouse_world_pos_2d;
+        return point_in_bounds(mouse_world_pos_2d, bounding_points);
+    }
+
     
     
     // find bounding points of given GGen (assume square shape on xz plane)

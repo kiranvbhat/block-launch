@@ -1,23 +1,25 @@
-// 26 => W;
-// 4 => A;
-// 22 => S;
-// 7 => D;
-
 public class Keyboard
 {
     int move_forward;
     int move_backward;
     int move_left;
     int move_right;
+    int move_down;
 
     int jump;
 
     int tempo_param;
     int bpm_param;
     int num_pads_param;
+    int gravity_param;
+    int launch_param;
 
-    int resync;
-    int chess_mode;
+    int increase_param;
+    int decrease_param;
+
+    int toggle_resync;
+    int toggle_chess_mode;
+    int toggle_menu;
 
     fun void self_update()
     {
@@ -29,6 +31,7 @@ public class Keyboard
             (UI.isKeyDown(UI_Key.A)) => move_left;
             (UI.isKeyDown(UI_Key.S)) => move_backward;
             (UI.isKeyDown(UI_Key.D)) => move_right;
+            (UI.isKeyDown(UI_Key.LeftShift)) => move_down;
 
             if (UI.isKeyPressed(UI_Key.Space, false))
             {
@@ -37,15 +40,30 @@ public class Keyboard
 
             (UI.isKeyDown(UI_Key.T)) => tempo_param;       // T: tempo
             (UI.isKeyDown(UI_Key.B)) => bpm_param;         // B: bpm
-            (UI.isKeyDown(UI_Key.N)) => num_pads_param;         // N: num pads
+            (UI.isKeyDown(UI_Key.N)) => num_pads_param;    // N: num pads
+            (UI.isKeyDown(UI_Key.G)) => gravity_param;    // G: gravity
+            (UI.isKeyDown(UI_Key.L)) => launch_param;    // L: launch
+
+            if (UI.isKeyPressed(UI_Key.UpArrow, false))
+            {
+                true => increase_param;
+            }
+            if (UI.isKeyPressed(UI_Key.DownArrow, false))
+            {
+                true => decrease_param;
+            }
 
             if (UI.isKeyPressed(UI_Key.R, false))
             {
-                true => resync;
+                true => toggle_resync;
             }
             if (UI.isKeyPressed(UI_Key.C, false))
             {
-                true => chess_mode;
+                true => toggle_chess_mode;
+            }
+            if (UI.isKeyPressed(UI_Key.E, false))
+            {
+                true => toggle_menu;
             }
             
         }

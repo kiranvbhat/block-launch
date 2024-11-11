@@ -1,8 +1,10 @@
-@import {"gplayer.ck", "raycaster.ck"}
+@import {"gplayer.ck", "raycaster.ck"};
+@import "constants.ck";
 
 // class structure adapted from Andrew Zhu Azaday's drum_machine.ck
 public class GPad extends GGen
-{
+{   
+    Constants c;
     // initialize mesh
     GCube pad --> this;
     PhongMaterial mat;
@@ -18,7 +20,7 @@ public class GPad extends GGen
 
     // crosshair scaling
     Envelope crosshair_sca_env => blackhole;
-    GPlayer.NEUTRAL_CROSSHAIR_SCA => crosshair_sca_env.value;
+    c.NEUTRAL_CROSSHAIR_SCA => crosshair_sca_env.value;
 
     // reference to player
     GPlayer @ player;
@@ -92,7 +94,20 @@ public class GPad extends GGen
 
     fun int is_hovered()
     {
-        return rc.in_vision_center(pad, this.rotY(), CLICK_RANGE);               // use ray casting to determine if the player is looking at pad (max distance of CLICK_RANGE)
+        if (player.camera_mode == GPlayer.FIRST_PERSON)
+        {
+            return rc.in_vision_center(pad, this.rotY(), CLICK_RANGE);               // use ray casting to determine if the player is looking at pad (max distance of CLICK_RANGE)
+        }
+        else if (player.camera_mode == player.THIRD_PERSON)
+        {
+            return rc.mouse_hovering(pad, this.rotY());
+        }
+        else
+        {
+            <<< "gpad.ck: invalid camera mode???" >>>;
+            return false;
+        }
+        
     }
 
     // true if the pad under the player (at the appropriate height)
@@ -164,7 +179,6 @@ public class GPad extends GGen
             if (player_state == HOVERED)
             {
                 player.launch();
-                <<< "LAUNCH!!" >>>;
             }
 
         }
@@ -218,7 +232,7 @@ public class GPad extends GGen
             HOVER_SCA => pad_sca_env.target;
 
             animation_dur => crosshair_sca_env.duration;
-            GPlayer.HOVER_CROSSHAIR_SCA => crosshair_sca_env.target;
+            c.HOVER_CROSSHAIR_SCA => crosshair_sca_env.target;
         }
         if (input == MOUSE_EXIT)
         {
@@ -226,7 +240,7 @@ public class GPad extends GGen
             NEUTRAL_SCA => pad_sca_env.target;
 
             animation_dur => crosshair_sca_env.duration;
-            GPlayer.NEUTRAL_CROSSHAIR_SCA => crosshair_sca_env.target;
+            c.NEUTRAL_CROSSHAIR_SCA => crosshair_sca_env.target;
         }
         if (input == PLAYER_HOVER)
         {
@@ -297,6 +311,9 @@ public class GPad extends GGen
 
         // update scale of pad
         pad.scaY(pad_sca_env.value());
+
+        // update scale of crosshair
+        // player.crosshair.sca(crosshair_sca_env.value());
         
     }
 }

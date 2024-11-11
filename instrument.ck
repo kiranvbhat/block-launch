@@ -1,4 +1,5 @@
-// base class for percussion instruments
-public class Instrument extends Chugraph {
-    fun void play() {}
+// base class for instruments
+public class Instrument extends Chugraph
+{
+    fun void play(dur duration, int note_index) {}
 }
