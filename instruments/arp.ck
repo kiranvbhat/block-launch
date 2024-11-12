@@ -1,8 +1,9 @@
 @import "../instrument.ck";
 
 public class Arp extends Instrument {
-    FrencHrn arp => NRev rev => outlet;
-    rev.mix(0.1);
+    FrencHrn arp => NRev rev => Gain g => outlet;
+    rev.mix(0.3);
+    g.gain(0.5);
 
     // scales
     [0, 2, 4, 5, 7, 9, 11] @=> static int MAJOR[];
@@ -11,7 +12,7 @@ public class Arp extends Instrument {
     [0, 2, 4, 6, 7, 9, 11] @=> static int LYDIAN[];
 
     4 => int num_notes;
-    54 => int start_note;
+    53 => int start_note;
     dur arp_dur;
     LYDIAN @=> int scale[];
 

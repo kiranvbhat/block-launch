@@ -408,17 +408,16 @@ fun void update_state()
 
 fun void play_background_music()
 {
-    "sounds/background/kick.wav" => string BACKGROUND_MUSIC_WAV;
+    "sounds/background/background.wav" => string BACKGROUND_MUSIC_WAV;
     SndBuf background_music => dac;
     true => background_music.loop;
-    1 => background_music.gain;
+    5 => background_music.gain;
     background_music.read(BACKGROUND_MUSIC_WAV);
     while (true)
     {
         background_music.length() => now;
     }
 }
-
 
 
 fun void setup()
@@ -431,8 +430,6 @@ fun void setup()
     place_platforms();
     place_stars();
     place_planets();
-
-    
 }
 
 

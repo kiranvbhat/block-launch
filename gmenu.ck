@@ -26,9 +26,9 @@ public class GMenu extends GGen
 
     Envelope status_env => blackhole;
     c.TEXT_ENV_DUR => status_env.duration;
-    c.STATUS_SCALE => status_env.value;
+    0 => status_env.value;
 
-    true => int status_displaying;
+    false => int status_displaying;
 
     GText action --> eye;      // text displaying the most recent action
     action.text("starting text");
@@ -38,13 +38,14 @@ public class GMenu extends GGen
     "BLOCK LAUNCH" => string most_recent_action;
     
     Envelope action_env => blackhole;
-    c.TEXT_ENV_DUR => action_env.duration;
+    c.TITLE_ENV_DUR => action_env.duration;
+    false => int title_already_displayed;
     // c.ACTION_SCALE => action_env.value;
 
     fun GMenu()
     {
         refresh_status();
-        display_action();
+        spork ~ display_action();
         refresh_layout();
     }
 
@@ -102,10 +103,28 @@ public class GMenu extends GGen
         <<< "Displaying action", new_action_str >>>;
         action.text(new_action_str);
 
-        100::ms => now;
-        c.ACTION_SCALE => action_env.target;
-        c.ACTION_LIFESPAN => now;
+        // 100::ms => now;
+        
+        if (!title_already_displayed)
+        {
+            5::second => now;      // delay title for filming
+            c.ACTION_SCALE => action_env.target;
+            c.TITLE_ENV_DUR => now;
+            c.ACTION_LIFESPAN => now;
+        }
+        else
+        {
+            c.ACTION_SCALE => action_env.target;
+            c.ACTION_LIFESPAN => now;
+        }
         0 => action_env.target;
+        if (!title_already_displayed)
+        {
+            c.TITLE_ENV_DUR => now;
+            true => title_already_displayed;
+            toggle_status();
+        }
+        c.TEXT_ENV_DUR => action_env.duration;
     }
 
     fun void update(float dt)

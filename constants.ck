@@ -25,14 +25,14 @@ public class Constants
     400 => int NUM_STARS;
 
     // scroll param limits
-    0 => float MIN_BPM;
+    5 => float MIN_BPM;
     2000 => float MAX_BPM;
 
     [EARTH_G, MOON_G, ZERO_G, JUPITER_G] @=> float GRAVITY_VALS[];
     ["EARTH", "MOON", "ZERO G", "JUPITER"] @=> string GRAVITY_NAMES[];
 
     2000 => float MIN_LAUNCH_FORCE;
-    8000 => float MAX_LAUNCH_FORCE;
+    10000 => float MAX_LAUNCH_FORCE;
 
     // scroll param step sizes
     5 => float TEMPO_PARAM_STEP;
@@ -109,6 +109,7 @@ public class Constants
     -0.3 => float MENU_POS_Z;
     1792 => float FULLSCREEN_WIDTH;
     1120 => float FULLSCREEN_HEIGHT;
+    3000::ms => dur TITLE_ENV_DUR;
     300::ms => dur TEXT_ENV_DUR;
     "???" => string UNKNOWN_STR;
 
