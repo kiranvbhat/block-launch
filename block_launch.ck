@@ -1,4 +1,4 @@
-@import {"gplayer.ck", "gpad.ck", "gplatform.ck", "gstar.ck", "gplanet.ck"};
+@import {"gmenu.ck", "gplayer.ck", "gpad.ck", "gplatform.ck", "gstar.ck", "gplanet.ck"};
 @import {"instrument.ck", "instruments/drum.ck", "instruments/arp.ck"};
 @import {"keyboard.ck", "mouse.ck"};
 @import "constants.ck";
@@ -12,12 +12,14 @@ Constants c;
 -1 => int current_platform;     // the platform the player is currently standing on (-1 if player isn't on any platform)
 
 // scroll params
-0 => int NONE_PARAM;
+-1 => int NONE_PARAM;
+0 => int INSTRUMENT_PARAM;
 1 => int TEMPO_PARAM;       // local tempo (playback rate)
 2 => int BPM_PARAM;         // global bpm
 3 => int NUM_PADS_PARAM;
 4 => int GRAVITY_PARAM;
 5 => int LAUNCH_PARAM;
+6 => int CHESS_MODE_PARAM;
 
 NONE_PARAM => int current_param;
 
@@ -49,10 +51,10 @@ Mouse mouse(0);
 spork ~ keyboard.self_update();
 spork ~ mouse.self_update();
 
+GMenu menu --> GG.scene();
+
 GPlayer player(keyboard, mouse) --> GG.scene();
 player.pos(STARTING_PLAYER_POS);
-
-
 
 
 fun void create_instruments()
@@ -168,37 +170,12 @@ fun void update_player_normal_force()
 fun void scroll_parameters()
 {
     // select current parameter we would like to change
-    if (keyboard.tempo_param) TEMPO_PARAM => current_param;
+    if (keyboard.instrument_param) INSTRUMENT_PARAM => current_param;
+    else if (keyboard.tempo_param) TEMPO_PARAM => current_param;
     else if (keyboard.bpm_param) BPM_PARAM => current_param;
     else if (keyboard.num_pads_param) NUM_PADS_PARAM => current_param;
     else if (keyboard.gravity_param) GRAVITY_PARAM => current_param;
     else if (keyboard.launch_param) LAUNCH_PARAM => current_param;
-
-
-    // -------------- scrolling controlls --------------
-    // update the selected parameter if scroll is detected
-
-    // GWindow.scrollY() => float scroll_delta;
-    // <<< "scroll delta:", scroll_delta >>>;
-
-    // 1 => int direction;     // 1 or -1
-    // if (scroll_delta < 0) -1 => direction;
-    // else 1 => direction;
-
-    // if (Math.fabs(scroll_delta) < 1) return;
-    
-    // if (current_param == BPM_PARAM)
-    // {
-    //     bpm + direction => bpm;
-    // }
-    // else if (current_param == NUM_PADS_PARAM)
-    // {
-    //     if (current_platform != -1)
-    //     {
-    //         platforms[current_platform].num_pads + direction => int new_num_pads;
-    //         platforms[current_platform].update_num_pads(new_num_pads);
-    //     }
-    // }
 
     // -------------- keyboard arrow controlls --------------
 
@@ -213,7 +190,12 @@ fun void scroll_parameters()
     }
     if (!direction) return;     // exit if we don't have a direction
 
-    if (current_param == TEMPO_PARAM)
+    if (current_param == INSTRUMENT_PARAM)
+    {
+        <<< "Not implemented" >>>;
+        // update_menu(INSTRUMENT_PARAM, 0);
+    }
+    else if (current_param == TEMPO_PARAM)
     {
         tempo + direction*c.TEMPO_PARAM_STEP => float new_tempo;
         Math.max(c.MIN_BPM, new_tempo) => new_tempo;
@@ -253,6 +235,11 @@ fun void scroll_parameters()
         Math.max(c.MIN_LAUNCH_FORCE, new_launch_force) => new_launch_force;
         Math.min(c.MAX_LAUNCH_FORCE, new_launch_force) => player.launch_force;
         <<< "set launch force to:", player.launch_force >>>;
+    }
+
+    if (direction != 0) // if we updated a parameter
+    {
+        spork ~ display_menu_action(current_param, direction);
     }
 }
 
@@ -295,6 +282,10 @@ fun toggle_resync()
         <<< "toggling resync" >>>;
     }
     false => keyboard.toggle_resync;
+
+    // displays action to player
+    "resynced!" => menu.most_recent_action;
+    menu.display_action();
 }
 
 
@@ -319,13 +310,89 @@ fun void toggle_chess_mode()
         }
         10::ms => now;
     }
+    // display_menu_action(CHESS_MODE_PARAM, 0);        // don't display action, looks better imo
 }
+
 
 fun void toggle_menu()
 {
     false => keyboard.toggle_menu;
+    menu.toggle_status();
     <<< "menu toggled" >>>;
+
+    // "toggled status display" => menu.most_recent_action;
+    // menu.display_action();
 }
+
+
+// loops over all statuses and gets latest info for menu
+fun void update_menu_status()
+{
+    for (int param; param < c.NUM_STATUS_PARAMS; param++)
+    {
+        get_status_string(param) => menu.status_strs[param];
+    }
+    menu.refresh_status();
+}
+
+
+// sends a new action string to the menu (pops up on screen)
+fun void display_menu_action(int param, int direction)
+{
+    // 1. direction string
+    "updated " => string direction_str;
+    if (direction == -1) "decreased " => direction_str;
+    if (direction == 1) "increased " => direction_str;
+
+    // 2. get status string (current value for status of given param)
+    get_status_string(param) => string status_str;
+
+    // 3. set full most_recent_action string
+    c.STATUS_PREFIX[param] + status_str => menu.most_recent_action;     // not including direction for now
+
+    // 4. refresh action
+    menu.display_action();
+}
+
+
+// given a parameter enum, returns the associated status string 
+// - e.g. given GRAVITY_PARAM, returns "EARTH", if we are currently using earth gravity
+fun string get_status_string(int param)
+{
+    string status_str;
+    if (param == INSTRUMENT_PARAM)
+    {
+        if (current_platform == -1) c.UNKNOWN_STR => status_str;
+        else {
+            platforms[current_platform].instrument.get_name() => status_str;
+        }
+    }
+    else if (param == TEMPO_PARAM) Std.itoa(tempo $ int) => status_str;
+    else if (param == BPM_PARAM)
+    {
+        if (current_platform == -1) c.UNKNOWN_STR => status_str;
+        else {
+            Std.itoa(platforms[current_platform].bpm $ int) => status_str;
+        }
+    }
+    else if (param == NUM_PADS_PARAM)
+    {
+        if (current_platform == -1) c.UNKNOWN_STR => status_str;
+        else {
+            Std.itoa(platforms[current_platform].num_pads $ int) => status_str;
+        }
+    }
+    else if (param == GRAVITY_PARAM) c.GRAVITY_NAMES[gravity_idx] => status_str;
+    else if (param == LAUNCH_PARAM) Std.itoa(player.launch_force $ int) => status_str;
+    else if (param == CHESS_MODE_PARAM)
+    {
+        "ON" => status_str;
+        if (!chess_mode) "OFF" => status_str;
+    }
+
+    return status_str;
+}
+
 
 
 
@@ -334,28 +401,15 @@ fun void update_state()
     update_player_normal_force();
     scroll_parameters();
     keyboard_toggles();
+    
 }
-
-fun void update_text()
-{
-    // update global bpm
-    // update local bpm text
-}
-
-
-//add the suzanne
-// @(1, 0, 0) => vec3 MONKEY_COLOR;       // Red
-// GSuzanne monkey --> GG.scene();
-// monkey.sca(1.5);
-// monkey.color(MONKEY_COLOR);
-
 
 
 
 fun void play_background_music()
 {
     "sounds/background/kick.wav" => string BACKGROUND_MUSIC_WAV;
-    SndBuf background_music;
+    SndBuf background_music => dac;
     true => background_music.loop;
     1 => background_music.gain;
     background_music.read(BACKGROUND_MUSIC_WAV);
@@ -378,24 +432,18 @@ fun void setup()
     place_stars();
     place_planets();
 
-    // start background music
-    spork ~ play_background_music();
+    
 }
 
 
 
 setup();
+spork ~ play_background_music();
 while(true)
 {
     // next graphics frame
     GG.nextFrame() => now;
 
     update_state();
-    update_text();
-    // <<< "current_platform:", current_platform >>>;
-    
-    // <<< "world scale:", monkey.scaWorld() >>>;
-    // <<< "local scale:", monkey.sca() >>>;
-    // <<< "eye pos:", player.eye.pos() >>>;
-    // <<< "crosshair pos:", player.crosshair.pos() >>>;
+    update_menu_status();       // update menu to reflect our changes to the state
 }

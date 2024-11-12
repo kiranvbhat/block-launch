@@ -42,4 +42,14 @@ public class Drum extends Instrument {
         drum.read(WAVS[drum_type]);
         drum.length() => now;
     }
+
+    fun string get_name()
+    {
+        if (drum_type == KICK) return "KICK";
+        if (drum_type == SNARE) return "SNARE";
+        if (drum_type == HIHAT) return "HI-HAT";
+        if (drum_type == CRASH) return "CRASH";
+        if (drum_type == RIDE) return "RIDE";
+        return "DRUM";
+    }
 }

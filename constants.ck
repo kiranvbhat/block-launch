@@ -44,8 +44,6 @@ public class Constants
     // starting scroll param vals
     120 => float DEFAULT_TEMPO;
     0 => int STARTING_GRAVITY_IDX;
-    
-
 
 
 
@@ -82,5 +80,39 @@ public class Constants
 
     // --------------------- gpad.ck ---------------------
     // TODO: migrate constants, as long as this doesn't cause performance issues (each pad would have constants object.. might not be a big deal though..)
+
+    // --------------------- gmenu.ck ---------------------
+    
+    // status
+    7 => int NUM_STATUS_PARAMS;
+    0.27 => float STATUS_POS_X;       // pos for fullscreen
+    0.17 => float STATUS_POS_Y;       // pos for fullscreen
+    0.016 => float STATUS_SCALE;
+    1 => float STATUS_SPACING;        // vertical text spacing
+    
+    "(I) instrument: " => string INSTRUMENT_PREFIX;
+    "(T) tempo: " => string TEMPO_PREFIX;
+    "(B) bpm: " => string BPM_PREFIX;
+    "(N) number of pads: " => string NUM_PADS_PREFIX;
+    "(G) gravity: " => string GRAVITY_PREFIX;
+    "(L) launch force: " => string LAUNCH_FORCE_PREFIX;
+    "(C) chess mode: " => string CHESS_MODE_PREFIX;
+    [INSTRUMENT_PREFIX, TEMPO_PREFIX, BPM_PREFIX, NUM_PADS_PREFIX, GRAVITY_PREFIX, LAUNCH_FORCE_PREFIX, CHESS_MODE_PREFIX] @=> string STATUS_PREFIX[];
+
+    "(E) status display" => string STATUS_DISPLAY_PREFIX;
+
+    // action
+    0.05 => float ACTION_SCALE;
+    2::second => dur ACTION_LIFESPAN;
+
+    // overall menu
+    -0.3 => float MENU_POS_Z;
+    1792 => float FULLSCREEN_WIDTH;
+    1120 => float FULLSCREEN_HEIGHT;
+    300::ms => dur TEXT_ENV_DUR;
+    "???" => string UNKNOWN_STR;
+
+    
+    
 
 }

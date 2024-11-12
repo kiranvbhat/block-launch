@@ -8,6 +8,7 @@ public class Keyboard
 
     int jump;
 
+    int instrument_param;
     int tempo_param;
     int bpm_param;
     int num_pads_param;
@@ -38,11 +39,12 @@ public class Keyboard
                 true => jump;
             }
 
+            (UI.isKeyDown(UI_Key.I)) => instrument_param;  // I: instrument
             (UI.isKeyDown(UI_Key.T)) => tempo_param;       // T: tempo
             (UI.isKeyDown(UI_Key.B)) => bpm_param;         // B: bpm
             (UI.isKeyDown(UI_Key.N)) => num_pads_param;    // N: num pads
-            (UI.isKeyDown(UI_Key.G)) => gravity_param;    // G: gravity
-            (UI.isKeyDown(UI_Key.L)) => launch_param;    // L: launch
+            (UI.isKeyDown(UI_Key.G)) => gravity_param;     // G: gravity
+            (UI.isKeyDown(UI_Key.L)) => launch_param;      // L: launch
 
             if (UI.isKeyPressed(UI_Key.UpArrow, false))
             {
