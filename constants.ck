@@ -32,19 +32,17 @@ public class Constants
     ["EARTH", "MOON", "ZERO G", "JUPITER"] @=> string GRAVITY_NAMES[];
 
     2000 => float MIN_LAUNCH_FORCE;
-    10000 => float MAX_LAUNCH_FORCE;
+    17000 => float MAX_LAUNCH_FORCE;
 
     // scroll param step sizes
     5 => float TEMPO_PARAM_STEP;
     5 => float BPM_PARAM_STEP;
     1 => int NUM_PADS_PARAM_STEP;       // must be integer (can't increase num_pads by half a pad..)
-    500 => float LAUNCH_PARAM_STEP;
-
+    1000 => float LAUNCH_PARAM_STEP;
 
     // starting scroll param vals
     120 => float DEFAULT_TEMPO;
     0 => int STARTING_GRAVITY_IDX;
-
 
 
     // --------------------- gplayer.ck ---------------------
@@ -75,11 +73,46 @@ public class Constants
     CUBE_DRAG_COEFFICIENT => float C_D;
     0.01 => float SURFACE_AREA;
 
+
     // --------------------- gplatform.ck ---------------------
-    // TODO: migrate constants
+
+    // constants for platform layout
+    0.7 => float PAD_SIZE;      // must be within [0, 1]
+    8 => float PLATFORM_PADDING;        // the padding between the edge of the platform and the pads
+    4 => int MAX_PADS_IN_ROW;
+    16 => int MAX_NUM_PADS;
+
+    20 => int PLATFORM_SCALE;
+    @(0.1, 0.1, 0.1) => vec3 PLATFORM_COLOR;
+
+    20::ms => dur TICK_DUR;     // notes are played tick by tick to check for interruptions (e.g. a resync)
+
 
     // --------------------- gpad.ck ---------------------
-    // TODO: migrate constants, as long as this doesn't cause performance issues (each pad would have constants object.. might not be a big deal though..)
+    // hopefully this doesn't cause performance issues (since each pad now has constants object)
+
+    0.1 => float NEUTRAL_PAD_SCA;
+    0.5 => float HOVER_PAD_SCA;
+    9 => float PLAYING_PAD_SCA;
+
+    // other constants
+    12 => float CLICK_RANGE;      // the range from which a player can click a pad (i.e. how long is the ray we cast from the camera)
+
+    // color maps
+    [
+        Color.WHITE,            // NONE
+        @(0.5, 0.5, 0.5),       // HOVERED
+        @(0, 0.9, 0),           // ACTIVE
+        @(1, 0, 0),             // PLAYING
+    ] @=> vec3 PAD_STATE_COLOR_MAP[];                          // color of pad when state is [STATE]
+
+    [
+        @(0.5, 0.5, 0.5),       // NONE
+        @(0.5, 0.5, 0.5),       // HOVERED
+        @(1, 0.3, 0),           // ACTIVE (launch warning color)
+        @(1, 0, 0),             // PLAYING
+    ] @=> vec3 PLAYER_HOVER_COLOR_MAP[];                        // color of pad when player is hovering and state is [STATE]
+
 
     // --------------------- gmenu.ck ---------------------
     
@@ -113,7 +146,21 @@ public class Constants
     300::ms => dur TEXT_ENV_DUR;
     "???" => string UNKNOWN_STR;
 
-    
-    
+
+    // --------------------- gplanet.ck ---------------------
+
+    @(0, 1, 0.4) => vec3 PLANET_ROTATION_AXIS;
+    0.0005 => float PLANET_ROTATE_AMOUNT;       // how many radians the planet rotates around axis in a frame
+    4 => float PLANET_ROTATION_EXP;      // exponent in exponential growth of rotation speed with tempo
+    200 => float PLANET_SCALE;
+
+
+    // --------------------- gstar.ck ---------------------
+    // wastes memory (since each star would now have constants object), so I'm leaving constants within the file
+
+
+    // --------------------- mouse.ck ---------------------
+    0 => int MOUSE_DEVICE;
+    0.002 => float MOUSE_SENSITIVITY;
 
 }

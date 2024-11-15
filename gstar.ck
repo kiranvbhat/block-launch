@@ -2,6 +2,7 @@ public class GStar extends GGen
 {
     5 => int NUM_SHAPES;
     GGen @ star;
+    0.5 => float STAR_SCALE;
     
     Math.PI/4 => float MAX_ROT_SPEED;
     // 0.04 => float MAX_ROT_SPEED;   // 0.04
@@ -18,7 +19,7 @@ public class GStar extends GGen
     fun void make_sphere()
     {
         new GSphere() @=> star;
-        star.sca(0.5);
+        star.sca(STAR_SCALE);
         star --> this;
     }
     

@@ -123,9 +123,10 @@ fun void place_stars()
 }
 
 
+GPlanet planet;
 fun void place_planets()
 {
-    GPlanet planet() --> GG.scene();
+    planet --> GG.scene();
     get_center_pos() => vec3 offset;
     offset.x - 250 => offset.x;
     planet.pos(offset);
@@ -200,7 +201,9 @@ fun void scroll_parameters()
         tempo + direction*c.TEMPO_PARAM_STEP => float new_tempo;
         Math.max(c.MIN_BPM, new_tempo) => new_tempo;
         Math.min(c.MAX_BPM, new_tempo) => tempo;
+        planet.update_rotation_speed(tempo);
         sync_tempo();
+        
         <<< "synced tempo to:", tempo >>>;
     }
     else if (current_param == BPM_PARAM)

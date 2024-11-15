@@ -26,12 +26,16 @@ public class SFX
             return;
         }
 
+        // get a free buf to play our sound effect
         get_free_buf_idx() => int free_buf_idx;
         if (free_buf_idx == -1) 0 => free_buf_idx;
 
+        // play our sound effect
         bufs[free_buf_idx].read(WAVS[sfx_id]);
         bufs[free_buf_idx].length() => now;
-        <<< "playing", WAVS[sfx_id] >>>;
+
+        // once sound effect is finished, mark it's buf as free
+        false => buf_in_use[free_buf_idx];
     }
 
     fun int get_free_buf_idx()

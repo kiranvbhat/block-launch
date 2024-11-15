@@ -1,11 +1,8 @@
 public class GPlanet extends GGen
 {
-    // 5 => int NUM_RINGS;
+    Constants c;
     GGen @ planet;
-    // GTorus rings[];
-    
-    @(0, 1, 0.4) => vec3 rotation_axis;
-    0.0005 => float rotate_amount;
+    c.PLANET_ROTATE_AMOUNT => float rotate_amount;
 
     fun GPlanet()
     {
@@ -16,18 +13,19 @@ public class GPlanet extends GGen
     {
         AssLoader ass_loader;
         ass_loader.loadObj(me.dir() + "models/earth.obj") @=> planet;
-        // ass_loader.loadObj(me.dir() + "models/rock1.obj") @=> planet;
-        planet.sca(200);
+        planet.sca(c.PLANET_SCALE);
         planet --> this;
     }
 
-    fun void update_rotation_speed(float bpm)     // use bpm of music to update the planet's rotation speed
+    fun void update_rotation_speed(float tempo)     // use tempo of music to update the planet's rotation speed
     {
-        bpm / 120 => float rotation_rate;
+        (tempo / c.DEFAULT_TEMPO) => float tempo_ratio;
+        Math.pow(tempo_ratio, c.PLANET_ROTATION_EXP) * c.PLANET_ROTATE_AMOUNT => rotate_amount;
+        // <<< "updated planet rotation amount to:", rotate_amount >>>;
     }
 
     fun void update(float dt)
     {
-        this.rotateOnWorldAxis(rotation_axis, rotate_amount);
+        this.rotateOnWorldAxis(c.PLANET_ROTATION_AXIS, rotate_amount);
     }
 }

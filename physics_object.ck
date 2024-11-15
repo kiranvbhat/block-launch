@@ -1,7 +1,6 @@
 public class PhysicsObject
 {
     60.0 => float FPS;
-    1.0/FPS => float timestep;
     
     // properties of world/object set by user
     vec3 gravity;
@@ -47,26 +46,26 @@ public class PhysicsObject
     // should be called every frame, to update the position of the physics object
     fun void update_position(float dt)
     {
-        dt => timestep;
+        // dt => timestep;
 
         // 1. update the current acceleration of the physics object, based on active forces
-        update_acceleration();
+        update_acceleration(dt);
         
         // 2. compute the velocity with the current acceleration
-        update_velocity();
+        update_velocity(dt);
 
         // 3. compute the new position with the updated velocity
-        position + (velocity * timestep) => position;
+        position + (velocity * dt) => position;
     }
 
 
-    fun void update_velocity()
+    fun void update_velocity(float dt)
     {
-        velocity + (acceleration * timestep) => velocity;
+        velocity + (acceleration * dt) => velocity;
     }
 
 
-    fun void update_acceleration()
+    fun void update_acceleration(float dt)
     {
 
         vec3 total_force;
@@ -81,7 +80,7 @@ public class PhysicsObject
         total_force + get_external_force() => total_force;
 
         // scale the y-force based on the timestep (so launching/jumping is consistent across different framerates)
-        if (timestep > 0) total_force.y / (timestep * FPS) => total_force.y;
+        if (dt > 0) total_force.y / (dt * FPS) => total_force.y;
 
         // <<< "total force for acceleration:", total_force >>>;
 
@@ -132,7 +131,6 @@ public class PhysicsObject
     {
         <<< "contacted ground!!" >>>;
         true => normal_force_on;
-        @(acceleration.x, 0, acceleration.z) => acceleration;
         @(velocity.x, 0, velocity.z) => velocity;
     }
 

@@ -1,9 +1,11 @@
 // Adapted from Andrew Zhu Aday's flycam Mouse class
+@import "constants.ck";
 
 public class Mouse
 {
-    0 => int device;
-    0.002 => float sensitivity;
+    Constants c;
+    c.MOUSE_DEVICE => int device;
+    c.MOUSE_SENSITIVITY => float sensitivity;
 
     // state to track cumulative mouse motion
     // x: mouse delta x
@@ -23,7 +25,7 @@ public class Mouse
     fun Mouse(int d, float s)
     {
         d => device;
-        s * 0.002 => sensitivity;
+        s * c.MOUSE_SENSITIVITY => sensitivity;
     }
 
     // returns motion delts since last time this function was called

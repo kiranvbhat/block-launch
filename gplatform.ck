@@ -1,25 +1,20 @@
-@import {"gpad.ck", "gplayer.ck", "raycaster.ck", "instrument.ck"}
+@import {"gpad.ck", "gplayer.ck", "raycaster.ck", "instrument.ck"};
+@import "constants.ck";
 
 public class GPlatform extends GGen
 {
-    // constants for platform layout
-    0.7 => float PAD_SIZE;      // must be within [0, 1]
-    8 => float PLATFORM_PADDING;        // the padding between the edge of the platform and the pads
-    4 => int MAX_PADS_IN_ROW;
-    16 => int STARTING_NUM_PADS;
-    16 => int MAX_NUM_PADS;
+    Constants c;
 
     // floor
     GPlane floor --> this;
     floor.rotateX(Math.PI/2);
-    floor.color(@(0.1, 0.1, 0.1));
-    floor.sca(20);
-    // floor.scaY(20);
+    floor.color(c.PLATFORM_COLOR);
+    floor.sca(c.PLATFORM_SCALE);
 
     // pads
     0 => int num_pads;
-    GPad pads[MAX_NUM_PADS];
-    int pad_in_use[MAX_NUM_PADS];     // 1 if pad is in use, 0 otherwise
+    GPad pads[c.MAX_NUM_PADS];
+    int pad_in_use[c.MAX_NUM_PADS];     // 1 if pad is in use, 0 otherwise
 
     // player and raycaster
     GPlayer @ player;
@@ -47,11 +42,7 @@ public class GPlatform extends GGen
     fun void update_num_pads(int new_num_pads)
     {
         if (new_num_pads < 0) return;
-        if (new_num_pads > MAX_NUM_PADS) return;
-        // Math.max(0, new_num_pads) => new_num_pads;                  // floor of 0
-        // Math.min(MAX_NUM_PADS, new_num_pads) => new_num_pads;       // ceiling of MAX_NUM_PADS
-
-        // stop_beat();
+        if (new_num_pads > c.MAX_NUM_PADS) return;
 
         if (new_num_pads < num_pads)
         {
@@ -61,9 +52,6 @@ public class GPlatform extends GGen
         {
             place_pads(num_pads, new_num_pads);
         }
-        
-        // new_num_pads => num_pads;
-        // start_beat();
     }
 
     fun void remove_pads(int start, int end)
@@ -82,9 +70,9 @@ public class GPlatform extends GGen
     fun void place_pads(int start, int end)     // include start, exclude end
     {
         
-        floor.sca().x - PLATFORM_PADDING => float floor_scale;
-        (floor_scale / (MAX_PADS_IN_ROW-1)) * PAD_SIZE => float pad_scale;
-        (floor_scale / (MAX_PADS_IN_ROW-1)) * (1 - PAD_SIZE) => float pad_spacing;
+        floor.sca().x - c.PLATFORM_PADDING => float floor_scale;
+        (floor_scale / (c.MAX_PADS_IN_ROW-1)) * c.PAD_SIZE => float pad_scale;
+        (floor_scale / (c.MAX_PADS_IN_ROW-1)) * (1 - c.PAD_SIZE) => float pad_spacing;
         @(-floor_scale/2, 0, -floor_scale/2) => vec3 pad_start_pos;
 
         for (start => int i; i < end; i++)
@@ -92,8 +80,8 @@ public class GPlatform extends GGen
             if (!pad_in_use[i])
             {
                 true => pad_in_use[i];
-                i % MAX_PADS_IN_ROW => int col;
-                i / MAX_PADS_IN_ROW  => int row;
+                i % c.MAX_PADS_IN_ROW => int col;
+                i / c.MAX_PADS_IN_ROW  => int row;
                 pad_start_pos.x + (pad_scale * col) + (pad_spacing * col) => float x;
                 pad_start_pos.z + (pad_scale * row) + (pad_spacing * row) => float z;
 
@@ -133,12 +121,12 @@ public class GPlatform extends GGen
                 dur play_duration;
                 while (play_duration <= beat_dur) {
                     if (!beat_is_active) break;         // if we are rudely interrupted by a resync, then stop chucking time into now
-                    10::ms => now;      // tatums????????? perhaps ticks
-                    play_duration + 10::ms => play_duration;
+                    c.TICK_DUR => now;      // tatums????????? perhaps ticks
+                    play_duration + c.TICK_DUR => play_duration;
                 }
 
                 if (beat_is_active) pads[current_beat].stop(beat_dur/1);    // beat_is_active can be changed during a resync!! don't stop the beat twice
-                
+                false => beat_is_active;
 
             }
             0 => current_beat;

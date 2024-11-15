@@ -12,15 +12,6 @@ public class GMenu extends GGen
     status.pos(@(0, 0, c.MENU_POS_Z));
     status.sca(c.STATUS_SCALE);
     status.spacing(c.STATUS_SPACING);
-    // status.pos(@(0, 1, 0));
-
-    // string instrument;
-    // string tempo;
-    // string bpm;
-    // string num_pads;
-    // string gravity;
-    // string launch_force;
-    // string chess_mode;
     
     string status_strs[c.NUM_STATUS_PARAMS];      // [instrument, tempo, bpm, num_pads, gravity, launch_force, chess_mode]
 
@@ -31,7 +22,7 @@ public class GMenu extends GGen
     false => int status_displaying;
 
     GText action --> eye;      // text displaying the most recent action
-    action.text("starting text");
+    action.text("BLOCK LAUNCH");
     action.pos(@(0, 0, c.MENU_POS_Z));
     action.sca(0);
 
@@ -99,11 +90,12 @@ public class GMenu extends GGen
 
     fun void display_action()
     {
-        most_recent_action => string new_action_str;
-        <<< "Displaying action", new_action_str >>>;
-        action.text(new_action_str);
-
-        // 100::ms => now;
+        if (title_already_displayed)
+        {
+            most_recent_action => string new_action_str;
+            <<< "Displaying action", new_action_str >>>;
+            action.text(new_action_str);
+        }
         
         if (!title_already_displayed)
         {

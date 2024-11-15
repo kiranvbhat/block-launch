@@ -11,12 +11,9 @@ public class GPad extends GGen
     pad.mat(mat);
 
     // height scaling
-    0.1 => static float NEUTRAL_SCA;
-    0.5 => static float HOVER_SCA;
-    9 => static float PLAYING_SCA;
-    pad.scaY(NEUTRAL_SCA);
+    pad.scaY(c.NEUTRAL_PAD_SCA);
     Envelope pad_sca_env => blackhole;
-    NEUTRAL_SCA => pad_sca_env.value;
+    c.NEUTRAL_PAD_SCA => pad_sca_env.value;
 
     // crosshair scaling
     Envelope crosshair_sca_env => blackhole;
@@ -50,26 +47,6 @@ public class GPad extends GGen
     5 => static int PLAYER_HOVER;
     6 => static int PLAYER_EXIT;
 
-    // other constants
-    12 => float CLICK_RANGE;      // the range from which a player can click a pad (i.e. how long is the ray we cast from the camera)
-
-    // false => int enabled;
-    // int track_num;
-    // int step_num;
-
-    // color map
-    [
-        Color.WHITE,            // NONE
-        @(0.5, 0.5, 0.5),    // HOVERED
-        // Color.WHITE,
-        @(0, 0.9, 0),           // ACTIVE
-        @(1, 0, 0),             // PLAYING
-    ] @=> vec3 color_map[];
-
-    // @(0, 0.9, 0) => vec3 PLAYER_HOVER_COLOR;
-    @(0.5, 0.5, 0.5) => vec3 PLAYER_HOVER_COLOR;
-    @(1, 0.3, 0) => vec3 PLAYER_LAUNCH_COLOR;
-
     // constructor
     fun GPad(GPlayer @ gp)
     {
@@ -96,7 +73,7 @@ public class GPad extends GGen
     {
         if (player.camera_mode == GPlayer.FIRST_PERSON)
         {
-            return rc.in_vision_center(pad, this.rotY(), CLICK_RANGE);               // use ray casting to determine if the player is looking at pad (max distance of CLICK_RANGE)
+            return rc.in_vision_center(pad, this.rotY(), c.CLICK_RANGE);               // use ray casting to determine if the player is looking at pad (max distance of c.CLICK_RANGE)
         }
         else if (player.camera_mode == player.THIRD_PERSON)
         {
@@ -154,7 +131,6 @@ public class GPad extends GGen
         }
     }
 
-    
 
     // handle mouse clicks
     fun void click_listener()
@@ -168,7 +144,6 @@ public class GPad extends GGen
     }
 
     // animation when playing
-    // set juice = true to animate
     fun void play(dur animation_dur)
     {
         handle_input(NOTE_ON);
@@ -193,8 +168,6 @@ public class GPad extends GGen
     {
         handle_input(NOTE_OFF);
         do_animation(NOTE_OFF, animation_dur);
-        // animation_dur => pad_sca_env.duration;
-        // NEUTRAL_SCA => pad_sca_env.target;
         
     }
 
@@ -210,8 +183,6 @@ public class GPad extends GGen
     {
         state => last_state;
         s => state;
-        // uncomment to randomize color when playing
-        // if (state == PLAYING) Color.random() => colorMap[PLAYING];
     }
 
     fun void do_animation(int input, dur animation_dur)
@@ -219,17 +190,17 @@ public class GPad extends GGen
         if (input == NOTE_ON)
         {
             animation_dur => pad_sca_env.duration;
-            PLAYING_SCA => pad_sca_env.target;
+            c.PLAYING_PAD_SCA => pad_sca_env.target;
         }
         if (input == NOTE_OFF)
         {
             animation_dur => pad_sca_env.duration;
-            NEUTRAL_SCA => pad_sca_env.target;
+            c.NEUTRAL_PAD_SCA => pad_sca_env.target;
         }
         if (input == MOUSE_HOVER)
         {
             animation_dur => pad_sca_env.duration;
-            HOVER_SCA => pad_sca_env.target;
+            c.HOVER_PAD_SCA => pad_sca_env.target;
 
             animation_dur => crosshair_sca_env.duration;
             c.HOVER_CROSSHAIR_SCA => crosshair_sca_env.target;
@@ -237,7 +208,7 @@ public class GPad extends GGen
         if (input == MOUSE_EXIT)
         {
             animation_dur => pad_sca_env.duration;
-            NEUTRAL_SCA => pad_sca_env.target;
+            c.NEUTRAL_PAD_SCA => pad_sca_env.target;
 
             animation_dur => crosshair_sca_env.duration;
             c.NEUTRAL_CROSSHAIR_SCA => crosshair_sca_env.target;
@@ -245,12 +216,12 @@ public class GPad extends GGen
         if (input == PLAYER_HOVER)
         {
             animation_dur => pad_sca_env.duration;
-            HOVER_SCA => pad_sca_env.target;
+            c.HOVER_PAD_SCA => pad_sca_env.target;
         }
         if (input == PLAYER_EXIT)
         {
             animation_dur => pad_sca_env.duration;
-            NEUTRAL_SCA => pad_sca_env.target;
+            c.NEUTRAL_PAD_SCA => pad_sca_env.target;
         }
     }
 
@@ -302,18 +273,15 @@ public class GPad extends GGen
         poll_player_hover();
 
         // update color of pad
-        if (player_state == HOVERED)
-        {
-            if (state == ACTIVE) this.color(PLAYER_LAUNCH_COLOR);
-            if (state == NONE || state == HOVERED) this.color(PLAYER_HOVER_COLOR);
-        }
-        else this.color(color_map[state]);
+        if (player_state == HOVERED) this.color(c.PLAYER_HOVER_COLOR_MAP[state]);
+        else this.color(c.PAD_STATE_COLOR_MAP[state]);
 
         // update scale of pad
         pad.scaY(pad_sca_env.value());
 
         // update scale of crosshair
-        // player.crosshair.sca(crosshair_sca_env.value());
+        // player.crosshair.sca(crosshair_sca_env.value());     // doesn't work since all pads are updating the crosshair size simultaneously... overwriting any changes to size made by the one pad thats actually being looked at 
+        // <<< crosshair_sca_env.value() >>>;
         
     }
 }
